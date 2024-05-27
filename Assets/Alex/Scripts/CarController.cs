@@ -9,6 +9,7 @@ public class CarController : MonoBehaviour
     private float horizontalInput, verticalInput;
     private float currentSteerAngle, currentbreakForce;
     private bool isBreaking;
+    public bool getInput = false;
 
     // Input
     [SerializeField] private AlexInputSystem alexInput;
@@ -30,7 +31,10 @@ public class CarController : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        //GetInput();
+        if (getInput)
+        {
+            GetInput();
+        }
         HandleMotor();
         HandleSteering();
         UpdateWheels();

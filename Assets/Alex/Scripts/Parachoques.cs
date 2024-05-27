@@ -11,6 +11,7 @@ public class Parachoques : MonoBehaviour
     {
         if (other.tag == tags)
         {
+            print("AAAAAA");
             choque.Invoke();
         }
     }

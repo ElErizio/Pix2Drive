@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
+using static UnityEngine.GraphicsBuffer;
 
 [RequireComponent(typeof(AlexInputSystem))]
 public class IA_Manejo : Agent
@@ -12,8 +13,11 @@ public class IA_Manejo : Agent
     AlexInputSystem alexInputSystem;
     CarController carController;
 
+    float deviation;
     Vector3 currentRotation;
     int mult = 1;
+
+    public int objs = 0;
     // Start is called before the first frame update
     void Start()
     {
@@ -25,6 +29,9 @@ public class IA_Manejo : Agent
     public Transform Objetivo;
     public override void OnEpisodeBegin()
     {
+
+        this.rBody.angularVelocity = Vector3.zero;
+        this.rBody.velocity = Vector3.zero;
         //si te caes este va a ser tu punto de inicio
         if (this.transform.localPosition.y < 0 || Mathf.Abs(currentRotation.x) > 80 || Mathf.Abs(currentRotation.z) > 80)
         {
@@ -35,9 +42,27 @@ public class IA_Manejo : Agent
 
         }
 
-        mult *= -1;
-        //mover el objetivo dentro del plano de manera aleatoria
-        Objetivo.localPosition = new Vector3(Random.value * 8 - 4, 0.5f, Random.Range(10*mult,25*mult));
+
+
+
+        //FASE 1 Linea Recta
+        if(objs < 20)
+        {
+            transform.localPosition = new Vector3(0, 0.5f, 0);
+            transform.eulerAngles = new Vector3(0, 0, 0);
+            Objetivo.localPosition = new Vector3(0, 0.5f, 15); ;
+
+        }else if(objs < 40)
+        {
+            transform.localPosition = new Vector3(0, 0.5f, 0);
+            Objetivo.localPosition = new Vector3(0, 0.5f, Random.Range(10 * mult, 25 * mult));
+        }
+        else
+        {
+            mult *= -1;
+            //mover el objetivo dentro del plano de manera aleatoria
+            Objetivo.localPosition = new Vector3(Random.Range(0, -20), 0.5f, Random.Range(10 * mult, 25 * mult));
+        }
     }
 
     //funcion para programar los sensores
@@ -46,11 +71,12 @@ public class IA_Manejo : Agent
         //el agente sepa la posicion del objetivo
         sensor.AddObservation(Objetivo.localPosition); //3 observaciones
         sensor.AddObservation(this.transform.localPosition); //3 observaciones
-        sensor.AddObservation(currentRotation); //3 observaciones
+        sensor.AddObservation(currentRotation.y); //1 observaciones
 
         //la velocidad del agente
         sensor.AddObservation(rBody.velocity.x);//1 observacion
         sensor.AddObservation(rBody.velocity.z);//1 observacion
+        sensor.AddObservation(deviation);//1 observacion
     }
     
     public override void OnActionReceived(ActionBuffers actions)
@@ -71,9 +97,21 @@ public class IA_Manejo : Agent
             SetReward(1.0f);
             EndEpisode();
         }*/
-        //politica en caso de que el agente sea tan pendejo y se caiga
 
-        if (this.transform.localPosition.y < 0)
+
+        deviation = CalculateDirectionDeviation(transform, Objetivo.position);
+        
+        if(deviation < 20)
+        {
+            SetReward(0.2f);
+        }
+        else
+        {
+            SetReward(-.1f);
+        }
+
+
+        if (this.transform.localPosition.y < -0.3f)
         {
             SetReward(-2.0f);
             EndEpisode();
@@ -98,6 +136,13 @@ public class IA_Manejo : Agent
             EndEpisode();
         }
         SetReward(-0.01f);
+
+        if(GetCumulativeReward() < -3f)
+        {
+            objs = 0;
+            SetReward(-2f);
+            EndEpisode();
+        }
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -110,11 +155,28 @@ public class IA_Manejo : Agent
     public void CollisionDelantera()
     {
         SetReward(1.0f);
+        objs++;
         EndEpisode();
     }
     public void CollisionTrasera()
     {
         SetReward(-1.0f);
         EndEpisode();
+    }
+
+    float CalculateDirectionDeviation(Transform characterTransform, Vector3 targetPosition)
+    {
+        // Vector que apunta desde el personaje al objetivo
+        Vector3 directionToTarget = targetPosition - characterTransform.position;
+        directionToTarget.y = 0; // Ignorar la componente y para calcular solo en el plano XZ
+
+        // Dirección a la que está mirando el personaje
+        Vector3 forward = characterTransform.forward;
+        forward.y = 0; // Ignorar la componente y para calcular solo en el plano XZ
+
+        // Calcula el ángulo entre las dos direcciones
+        float angle = Vector3.Angle(forward, directionToTarget);
+
+        return angle;
     }
 }
