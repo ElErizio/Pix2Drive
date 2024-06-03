@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class AlexInputSystem : MonoBehaviour
@@ -18,8 +16,6 @@ public class AlexInputSystem : MonoBehaviour
 
         // Breaking Input
         SetBreakInput(Input.GetKey(KeyCode.Space));
-        
-
     }
 
     public float GetHorizontalAxis()
