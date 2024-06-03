@@ -12,6 +12,8 @@ public class IA_Manejo : Agent
     Rigidbody rBody;
     AlexInputSystem alexInputSystem;
     CarController carController;
+    RotationCounter rotCounter;
+    int vueltas;
 
     float deviation;
     Vector3 currentRotation;
@@ -22,6 +24,7 @@ public class IA_Manejo : Agent
     void Start()
     {
         rBody = GetComponent<Rigidbody>();
+        rotCounter = GetComponent<RotationCounter>();
         alexInputSystem = GetComponent<AlexInputSystem>();
         carController = GetComponent<CarController>();
     }
@@ -29,7 +32,8 @@ public class IA_Manejo : Agent
     public Transform Objetivo;
     public override void OnEpisodeBegin()
     {
-
+        vueltas = 0;
+        rotCounter.vueltas = 0;
         this.rBody.angularVelocity = Vector3.zero;
         this.rBody.velocity = Vector3.zero;
         //si te caes este va a ser tu punto de inicio
@@ -50,7 +54,7 @@ public class IA_Manejo : Agent
         {
             transform.localPosition = new Vector3(0, 0.5f, 0);
             transform.eulerAngles = new Vector3(0, 0, 0);
-            Objetivo.localPosition = new Vector3(0, 0.5f, 15); ;
+            Objetivo.localPosition = new Vector3(Random.Range(-2, 2), 0.5f, 15); ;
 
         }else if(objs < 40)
         {
@@ -82,22 +86,14 @@ public class IA_Manejo : Agent
     public override void OnActionReceived(ActionBuffers actions)
     {
         base.OnActionReceived(actions);
-        /*//programar 2 actuadores
-        Vector3 controlSignal = Vector3.zero;
-        controlSignal.x = actions.ContinuousActions[0];
-        controlSignal.z = actions.ContinuousActions[1];*/
+        
         carController.SetInput(actions.ContinuousActions[0], actions.ContinuousActions[1], false);
 
-        //programar las politicas
-        /*float distanciaobjetivo = Vector3.Distance(this.transform.localPosition, Objetivo.localPosition);
-
-        //politica para cuando el agente agarre al objetivo
-        if (distanciaobjetivo < 1.42f)
+        if (actions.ContinuousActions[1] > 0)
         {
-            SetReward(1.0f);
-            EndEpisode();
-        }*/
 
+            SetReward(0.01f);
+        }
 
         deviation = CalculateDirectionDeviation(transform, Objetivo.position);
         
@@ -110,6 +106,21 @@ public class IA_Manejo : Agent
             SetReward(-.1f);
         }
 
+        if(vueltas != Mathf.Abs(Mathf.RoundToInt(rotCounter.ObtenerVueltas())))
+        {
+            print("Penalizacion Vuelta");
+            
+            SetReward(-2f);
+            vueltas = Mathf.Abs(Mathf.RoundToInt(rotCounter.ObtenerVueltas()));
+
+            if(vueltas > 1)
+            {
+
+                SetReward(-1f);
+                EndEpisode();
+            }
+
+        }
 
         if (this.transform.localPosition.y < -0.3f)
         {
@@ -143,6 +154,7 @@ public class IA_Manejo : Agent
             SetReward(-2f);
             EndEpisode();
         }
+
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -154,7 +166,7 @@ public class IA_Manejo : Agent
 
     public void CollisionDelantera()
     {
-        SetReward(1.0f);
+        SetReward(2.0f);
         objs++;
         EndEpisode();
     }
