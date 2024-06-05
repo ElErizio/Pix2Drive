@@ -19,6 +19,7 @@ public class IA_UFO : Agent
 
     public int objs = 0;
 
+    float distanciaAnterior;
     void Start()
     {
         rBody = GetComponent<Rigidbody>();
@@ -41,26 +42,29 @@ public class IA_UFO : Agent
         }
 
 
-
+        
 
         //FASE 1 Linea Recta
-        if(objs < 20)
+       /* if(objs < 20)
         {
             transform.localPosition = new Vector3(0, 0.5f, 0);
             transform.eulerAngles = new Vector3(0, 0, 0);
             Objetivo.localPosition = new Vector3(Random.Range(-2, 2), 0.5f, 15); ;
 
-        }else if(objs < 40)
+        }else */if(objs < 40)
         {
-            transform.localPosition = new Vector3(0, 0.5f, 0);
-            Objetivo.localPosition = new Vector3(0, 0.5f, Random.Range(10 * mult, 25 * mult));
+
+            mult *= -1;
+            //transform.localPosition = new Vector3(0, 0.5f, 0);
+            Objetivo.localPosition = new Vector3(Random.Range(10 * mult, 20 * mult), 0.5f, Random.Range(10 * mult, 20 * mult));
         }
         else
         {
             mult *= -1;
             //mover el objetivo dentro del plano de manera aleatoria
-            Objetivo.localPosition = new Vector3(Random.Range(0, -20), 0.5f, Random.Range(10 * mult, 25 * mult));
+            Objetivo.localPosition = new Vector3(Random.Range(-20, 20), 0.5f, Random.Range(-20, 20));
         }
+        distanciaAnterior = Vector3.Distance(transform.position,Objetivo.transform.position);
     }
 
     //funcion para programar los sensores
@@ -82,20 +86,37 @@ public class IA_UFO : Agent
         Vector3 controlSignal = Vector3.zero;
         controlSignal.x = actions.ContinuousActions[0];
         controlSignal.z = actions.ContinuousActions[1];
-        print(controlSignal);
-        rBody.AddForce(controlSignal * fuerza);
+
+        rBody.velocity = new Vector3(controlSignal.x*fuerza, rBody.velocity.y, controlSignal.z * fuerza);
 
 
         if (this.transform.localPosition.y < -0.3f)
         {
+
+            print("C cae");
+            print(GetCumulativeReward());
             SetReward(-2.0f);
             EndEpisode();
         }
 
-        SetReward(-0.01f);
+        SetReward(-0.005f);
 
-        if(GetCumulativeReward() < -3f)
+        if(distanciaAnterior > Vector3.Distance(transform.position, Objetivo.transform.position))
         {
+
+            print("C acerca");
+            SetReward(0.01f);
+        }
+        else{
+            SetReward(-0.03f);
+        }
+
+        distanciaAnterior = Vector3.Distance(transform.position, Objetivo.transform.position);
+
+
+        if (GetCumulativeReward() < -10f)
+        {
+            print("aaaaa");
             objs = 0;
             SetReward(-2f);
             EndEpisode();
@@ -106,12 +127,13 @@ public class IA_UFO : Agent
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var conti = actionsOut.ContinuousActions;
-        conti[0] = Input.GetAxis("Horizontal");
-        conti[1] = Input.GetAxis("Vertical");
+        conti[0] = alexInputSystem.GetVerticalAxis();
+        conti[1] = alexInputSystem.GetHorizontalAxis();
     }
 
     public void CollisionConObjetivo()
     {
+        print("objetivo");
         SetReward(2.0f);
         objs++;
         EndEpisode();
