@@ -12,7 +12,11 @@ public class IA_UFO : Agent
     Rigidbody rBody;
     AlexInputSystem alexInputSystem;
 
-
+    public Maps maps;
+    public Transform groundChecker;
+    public LayerMask manejable;
+    public LayerMask noManejable;
+    public float dondeEstoyManejando;
 
     public int fuerza = 100;
     int mult = 1;
@@ -41,7 +45,7 @@ public class IA_UFO : Agent
 
         }
 
-
+        maps.NextObjective();
         
 
         //FASE 1 Linea Recta
@@ -51,7 +55,7 @@ public class IA_UFO : Agent
             transform.eulerAngles = new Vector3(0, 0, 0);
             Objetivo.localPosition = new Vector3(Random.Range(-2, 2), 0.5f, 15); ;
 
-        }else */if(objs < 40)
+        }else if(objs < 40)
         {
 
             mult *= -1;
@@ -59,11 +63,11 @@ public class IA_UFO : Agent
             Objetivo.localPosition = new Vector3(Random.Range(10 * mult, 20 * mult), 0.5f, Random.Range(10 * mult, 20 * mult));
         }
         else
-        {
-            mult *= -1;
+        {*/
+            //mult *= -1;
             //mover el objetivo dentro del plano de manera aleatoria
-            Objetivo.localPosition = new Vector3(Random.Range(-20, 20), 0.5f, Random.Range(-20, 20));
-        }
+            //Objetivo.localPosition = new Vector3(Random.Range(-20, 20), 0.5f, Random.Range(-20, 20));
+        //}
         distanciaAnterior = Vector3.Distance(transform.position,Objetivo.transform.position);
     }
 
@@ -77,6 +81,8 @@ public class IA_UFO : Agent
         //la velocidad del agente
         sensor.AddObservation(rBody.velocity.x);//1 observacion
         sensor.AddObservation(rBody.velocity.z);//1 observacion
+
+        sensor.AddObservation(dondeEstoyManejando); //1 observacion
     }
     
     public override void OnActionReceived(ActionBuffers actions)
@@ -90,12 +96,32 @@ public class IA_UFO : Agent
         rBody.velocity = new Vector3(controlSignal.x*fuerza, rBody.velocity.y, controlSignal.z * fuerza);
 
 
+        bool carr = Physics.CheckSphere(groundChecker.position, 0.1f, manejable);
+        bool banqueta = Physics.CheckSphere(groundChecker.position, 0.1f, noManejable);
+
+        if (banqueta)
+        {
+            SetReward(-0.25f);
+            print("NO");
+            dondeEstoyManejando = 2;
+        }
+        else if(carr)
+        {
+            print("SI");
+            dondeEstoyManejando = 1;
+        }
+        else
+        {
+            dondeEstoyManejando = 0;
+        }
+
+
         if (this.transform.localPosition.y < -0.3f)
         {
 
             print("C cae");
-            print(GetCumulativeReward());
             SetReward(-2.0f);
+            maps.Restart();
             EndEpisode();
         }
 
@@ -103,8 +129,6 @@ public class IA_UFO : Agent
 
         if(distanciaAnterior > Vector3.Distance(transform.position, Objetivo.transform.position))
         {
-
-            print("C acerca");
             SetReward(0.01f);
         }
         else{
@@ -119,6 +143,9 @@ public class IA_UFO : Agent
             print("aaaaa");
             objs = 0;
             SetReward(-2f);
+            maps.Restart();
+
+            this.transform.localPosition = new Vector3(0, 0.5f, 0);
             EndEpisode();
         }
 

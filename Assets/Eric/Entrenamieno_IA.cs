@@ -3,7 +3,7 @@ using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
 
-public class Entrenamieno_IA : MonoBehaviour
+public class Entrenamieno_IA : Agent
 {
     Rigidbody rBody;
 
@@ -29,14 +29,14 @@ public class Entrenamieno_IA : MonoBehaviour
     public override void CollectObservations(VectorSensor sensor) 
     {
         sensor.AddObservation(Objetivo.localPosition);
-        sensor.AddObservation(this.transform,localPosition);
+        sensor.AddObservation(this.transform.localPosition);
 
         sensor.AddObservation(rBody.velocity.x);
         sensor.AddObservation(rBody.velocity.z);
     }
 
     public float multiplicador = 10;
-    public override void OnAcitionReceived(ActionBuffers actions) 
+    public override void OnActionReceived(ActionBuffers actions)
     {
         base.OnActionReceived(actions);
     }
