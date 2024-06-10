@@ -29,7 +29,7 @@ public class Entrenamieno_IA : MonoBehaviour
     public override void CollectObservations(VectorSensor sensor) 
     {
         sensor.AddObservation(Objetivo.localPosition);
-        sensor.AddObservation(this.transform,localPosition);
+        sensor.AddObservation(this.transform.localPosition);
 
         sensor.AddObservation(rBody.velocity.x);
         sensor.AddObservation(rBody.velocity.z);
