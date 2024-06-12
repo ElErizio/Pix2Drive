@@ -18,7 +18,7 @@ public class IA_Manejo : Agent
     int mult = 1;
 
     public int objs = 0;
-    // Start is called before the first frame update
+    
     void Start()
     {
         rBody = GetComponent<Rigidbody>();

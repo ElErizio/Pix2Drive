@@ -17,6 +17,12 @@ public class RotationCounter : MonoBehaviour
         rotacionPrevia = transform.eulerAngles.y;
     }
 
+    public void ReStart()
+    {
+        rotacionPrevia = transform.eulerAngles.y;
+        vueltas = 0;
+    }
+
     void Update()
     {
         // Llama a la función para contar vueltas
