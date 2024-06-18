@@ -1023,6 +1023,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: TrainingZoneConCarrito (8)
       objectReference: {fileID: 0}
+    - target: {fileID: 7568725716242455704, guid: 34843176b9281554682b115e147ded79, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
