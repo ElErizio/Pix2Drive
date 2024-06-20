@@ -8,7 +8,7 @@ public class Semaforo : MonoBehaviour
     public Material green;
     public Material red;
     public GameObject checkPointSemaforo;
-    public int timeToChange;
+    public float timeToChange;
     //public string badCheckpointTag;
 
     public GameObject areaColl;
@@ -17,13 +17,22 @@ public class Semaforo : MonoBehaviour
 
     public int minSecs, maxSecs;
 
+    public bool useTimeDelta;
+
     private void Start()
     {
         ChangeState();
     }
     private void Update()
     {
-        timeToChange--;
+        if (useTimeDelta)
+        {
+            timeToChange -= Time.deltaTime;
+        }
+        else
+        {
+            timeToChange--;
+        }
         if(timeToChange <= 0)
         {
             ChangeState();
