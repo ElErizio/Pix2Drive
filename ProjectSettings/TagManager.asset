@@ -8,6 +8,7 @@ TagManager:
   - NoManejable
   - CheckPoint
   - BadCheckPoint
+  - Semaforo
   layers:
   - Default
   - TransparentFX

@@ -5,7 +5,7 @@ using Unity.MLAgents.Actuators;
 using static UnityEngine.GraphicsBuffer;
 
 [RequireComponent(typeof(AlexInputSystem))]
-public class IA_Semaforo : Agent
+public class IA_ManejoSemaforo : Agent
 {
 
     Rigidbody rBody;
@@ -41,18 +41,35 @@ public class IA_Semaforo : Agent
         if (this.transform.localPosition.y < 0 || reset == true)
         {
             reset = false;
+            maps.Restart();
             this.rBody.angularVelocity = Vector3.zero;
             this.rBody.velocity = Vector3.zero;
             this.transform.localPosition = initialPos;
+            if (objs > 100)
+            {
+                initialRot = initialRot * -1;
+                maps.reverse = !maps.reverse;
+                maps.ReverseCheckpoints();
+            }
             this.transform.localEulerAngles = initialRot;
+            timeAFK = 0;
+
+
         }
 
         maps.NextObjective();
 
     }
+
+    //funcion para programar los sensores
     public override void CollectObservations(VectorSensor sensor)
     {
-        sensor.AddObservation(Vector3.Distance(maps.GetNextCheckPoint().transform.position, transform.position));//1 observacion
+
+        sensor.AddObservation(Vector3.Distance(maps.GetNextCheckPoint().transform.position, transform.position));
+
+
+
+        sensor.AddObservation(stop);
 
         //la velocidad del agente
         sensor.AddObservation(rBody.velocity.x);//1 observacion
@@ -63,34 +80,53 @@ public class IA_Semaforo : Agent
     public override void OnActionReceived(ActionBuffers actions)
     {
         base.OnActionReceived(actions);
-        
         carController.SetInput(actions.ContinuousActions[1], actions.ContinuousActions[0], false);
 
-        
-        score = GetCumulativeReward();
-
-        if(stop)
+        if (stop == false)
         {
-            if (rBody.velocity.magnitude > 0.2f)
+
+            if (actions.ContinuousActions[0] > 0)
             {
-                SetReward(-0.01f);
+                SetReward(0.001f);
             }
-            else
+
+
+            SetReward(-0.002f);
+
+
+            if (rBody.velocity.magnitude < 0.3)
             {
-                SetReward(0.005f);
+                timeAFK++;
+                SetReward(-0.001f);
+                if (timeAFK > 1000)
+                {
+                    print("AFK");
+                    SetReward(-4f - Vector3.Distance(maps.GetNextCheckPoint().transform.position, transform.position));
+                    reset = true;
+                    EndEpisode();
+                }
             }
         }
         else
         {
-            if (rBody.velocity.magnitude < 0.2f)
+            if (rBody.velocity.magnitude <= 1)
             {
-                SetReward(-0.01f);
+                SetReward(0.01f);
+                if (rBody.velocity.magnitude < 0.5)
+                {
+                    SetReward(0.01f);
+                }
             }
             else
             {
-                SetReward(0.005f);
+                //print(rBody.velocity.magnitude);
+                SetReward(-(rBody.velocity.magnitude/15));
+                print("Se paso el alto");
             }
         }
+
+
+        score = GetCumulativeReward();
 
         if (GetCumulativeReward() < -6f)
         {
@@ -107,6 +143,18 @@ public class IA_Semaforo : Agent
         var conti = actionsOut.ContinuousActions;
         conti[0] = alexInputSystem.GetVerticalAxis();
         conti[1] = alexInputSystem.GetHorizontalAxis();
+    }
+
+    public void SetStop(bool needStop)
+    {
+        stop = needStop;
+    }
+
+    public void SalirSemaforoReversa(bool needStop)
+    {
+        print("Salió de reversa");
+        stop = needStop;
+        SetReward(-3);
     }
 
     public void CorrectCheckpoint()

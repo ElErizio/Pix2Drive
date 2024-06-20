@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MapsV2 : MonoBehaviour
 {
-    public IA_ManejoV3 player;
+    public GameObject player;
     public List<CheckPoint> checkPoints = new List<CheckPoint>();
     public int nextCorrectCheckPoint;
     public string checkpointTag;
@@ -65,13 +65,45 @@ public class MapsV2 : MonoBehaviour
         if(nextCorrectCheckPoint == checkPoints.IndexOf(checkPoint))
         {
             nextCorrectCheckPoint = (nextCorrectCheckPoint+1)%checkPoints.Count;
-            player.CorrectCheckpoint();
+            try
+            {
+
+                player.GetComponent<IA_ManejoV3>().CorrectCheckpoint();
+            }
+            catch
+            {
+                try
+                {
+
+                    player.GetComponent<IA_ManejoSemaforo>().CorrectCheckpoint();
+                }
+                catch
+                {
+                    print("nomas no es un player");
+                }
+            }
             NextObjective();
             print("Checkpoint");
         }
         else
         {
-            player.WrongCheckpoint();
+            try
+            {
+
+                player.GetComponent<IA_ManejoV3>().WrongCheckpoint();
+            }
+            catch
+            {
+                try
+                {
+
+                    player.GetComponent<IA_ManejoSemaforo>().WrongCheckpoint();
+                }
+                catch
+                {
+                    print("nomas no es un player");
+                }
+            }
             print("Sentido Contrario");
         }
     }
